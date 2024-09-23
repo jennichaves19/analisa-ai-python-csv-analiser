@@ -53,9 +53,9 @@ def gerar_grafico():
 
     # Definindo cores para cada métrica
     cores = {
-        'Vendas': 'blue',
-        'Visitantes': 'orange',
-        'Faturamento': 'green'
+        'Total de Vendas': 'blue',
+        'Total de Visitantes': 'orange',
+        'Faturamento Médio': 'green'
     }
 
     # Verifica se as colunas existem e plota cada uma
@@ -71,19 +71,19 @@ def gerar_grafico():
 
         # Plota cada métrica com largura de barra reduzida
         if 'Vendas' in grouped_data.columns:
-            plt.bar([i - bar_width for i in indices], grouped_data['Vendas'], width=bar_width, color=cores['Vendas'], alpha=0.7, label='Vendas')
+            plt.bar([i - bar_width for i in indices], grouped_data['Vendas'], width=bar_width, color=cores['Total de Vendas'], alpha=0.7, label='Total de Vendas')
 
         if 'Visitantes' in grouped_data.columns:
-            plt.bar(indices, grouped_data['Visitantes'], width=bar_width, color=cores['Visitantes'], alpha=0.7, label='Visitantes')
+            plt.bar(indices, grouped_data['Visitantes'], width=bar_width, color=cores['Total de Visitantes'], alpha=0.7, label='Total de Visitantes')
 
         if 'Faturamento' in grouped_data.columns:
-            plt.bar([i + bar_width for i in indices], grouped_data['Faturamento'], width=bar_width, color=cores['Faturamento'], alpha=0.7, label='Faturamento')
+            plt.bar([i + bar_width for i in indices], grouped_data['Faturamento'], width=bar_width, color=cores['Faturamento Médio'], alpha=0.7, label='Faturamento Médio')
 
         plt.title("Métricas por Dia")
         plt.xlabel("Data")
         plt.ylabel("Valores")
         plt.xticks(indices, grouped_data.index.strftime('%d/%m/%Y'), rotation=45)  # Rotaciona as labels do eixo X
-        plt.legend()
+        plt.legend()  # Mostra a legenda com os novos nomes
         plt.tight_layout()  # Ajusta o layout para melhor visualização
         plt.show()
     else:
