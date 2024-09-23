@@ -2,15 +2,19 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 import pandas as pd
 import matplotlib.pyplot as plt
+import shutil
+import os
 
 # Função para abrir o arquivo
 def abrir_arquivo():
     file_path = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv")])
     if file_path:
         try:
-            # Ler o CSV considerando a primeira linha como cabeçalho
-            df = pd.read_csv(file_path, encoding='utf-8', delimiter=';', header=0)
-            print(df.head())  # Para verificar se os dados foram lidos corretamente
+            if file_path.endswith('.csv'):
+                df = pd.read_csv(file_path, encoding='utf-8', delimiter=';')
+                print(df.head())
+            else:
+                df = pd.read_excel(file_path)
 
             # Converter a coluna 'Data' para o formato correto (DD/MM/YYYY)
             if 'Data' in df.columns:
@@ -31,63 +35,51 @@ def processar_dados(df):
                                     f"Faturamento Médio: {faturamento_medio}\n"
                                     f"Total de Vendas: {total_vendas}")
 
-        gerar_grafico_btn.config(state=tk.NORMAL)  # Habilita o botão após processar os dados
-        update_button_style()  # Atualiza o estilo do botão
-        gerar_grafico_btn.df = df  # Armazena o dataframe para o botão de gerar gráfico
+        gerar_grafico_btn.config(state=tk.NORMAL)
+        update_button_style()  # Atualizar estilo do botão ao habilitar
 
     except Exception as e:
         messagebox.showerror("Erro", f"Erro ao processar os dados: {e}")
-
-# Função para atualizar o estilo do botão
-def update_button_style():
-    if gerar_grafico_btn['state'] == tk.NORMAL:
-        gerar_grafico_btn.config(bg="#008CBA", fg="white")
-    else:
-        gerar_grafico_btn.config(bg="white", fg="gray")
 
 # Função para gerar gráficos
 def gerar_grafico():
     df = gerar_grafico_btn.df
 
-    plt.figure(figsize=(10, 6))  # Aumenta o tamanho da figura
+    plt.figure(figsize=(10, 6))
 
-    # Definindo cores para cada métrica
-    cores = {
-        'Total de Vendas': 'blue',
-        'Total de Visitantes': 'orange',
-        'Faturamento Médio': 'green'
-    }
+    # Gráfico de barras
+    if 'Vendas' in df.columns or 'Visitantes' in df.columns or 'Faturamento' in df.columns:
+        if 'Vendas' in df.columns:
+            df.groupby('Data')['Vendas'].sum().plot(kind='bar', alpha=0.7, label='Total de Vendas', color='blue', width=0.3)
 
-    # Verifica se as colunas existem e plota cada uma
-    if 'Data' in df.columns:
-        # Agrupar os dados por data
-        grouped_data = df.groupby('Data').sum()
+        if 'Visitantes' in df.columns:
+            df.groupby('Data')['Visitantes'].sum().plot(kind='bar', alpha=0.7, label='Total de Visitantes', color='orange', width=0.3)
 
-        # Tamanho da barra
-        bar_width = 0.2  # Largura da barra reduzida
-
-        # Posições das barras
-        indices = range(len(grouped_data))
-
-        # Plota cada métrica com largura de barra reduzida
-        if 'Vendas' in grouped_data.columns:
-            plt.bar([i - bar_width for i in indices], grouped_data['Vendas'], width=bar_width, color=cores['Total de Vendas'], alpha=0.7, label='Total de Vendas')
-
-        if 'Visitantes' in grouped_data.columns:
-            plt.bar(indices, grouped_data['Visitantes'], width=bar_width, color=cores['Total de Visitantes'], alpha=0.7, label='Total de Visitantes')
-
-        if 'Faturamento' in grouped_data.columns:
-            plt.bar([i + bar_width for i in indices], grouped_data['Faturamento'], width=bar_width, color=cores['Faturamento Médio'], alpha=0.7, label='Faturamento Médio')
+        if 'Faturamento' in df.columns:
+            df.groupby('Data')['Faturamento'].mean().plot(kind='bar', alpha=0.7, label='Faturamento Médio', color='green', width=0.3)
 
         plt.title("Métricas por Dia")
         plt.xlabel("Data")
         plt.ylabel("Valores")
-        plt.xticks(indices, grouped_data.index.strftime('%d/%m/%Y'), rotation=45)  # Rotaciona as labels do eixo X
-        plt.legend()  # Mostra a legenda com os novos nomes
-        plt.tight_layout()  # Ajusta o layout para melhor visualização
+        plt.legend()
+        plt.tight_layout()
         plt.show()
     else:
         messagebox.showerror("Erro", "Não foi possível gerar o gráfico. Colunas 'Vendas', 'Visitantes' ou 'Faturamento' não encontradas.")
+
+# Função para baixar o CSV de exemplo
+def baixar_csv_exemplo():
+    try:
+        # Caminho do arquivo de exemplo
+        caminho_exemplo = 'resources/exemplo_dados.csv'  # Ajuste o caminho aqui
+        destino = filedialog.asksaveasfilename(defaultextension=".csv",
+                                               filetypes=[("CSV files", "*.csv")])
+        if destino:
+            shutil.copy(caminho_exemplo, destino)
+            messagebox.showinfo("Sucesso", "CSV de exemplo baixado com sucesso!")
+    except Exception as e:
+        messagebox.showerror("Erro", f"Erro ao baixar o arquivo: {e}")
+
 
 # Interface gráfica
 root = tk.Tk()
@@ -103,6 +95,10 @@ frame.pack(expand=True)
 abrir_btn = tk.Button(frame, text="Carregar Planilha", command=abrir_arquivo, bg="#008CBA", fg="white", borderwidth=0, padx=10, pady=5)
 abrir_btn.pack(pady=10)
 
+# Botão para baixar CSV de exemplo
+baixar_btn = tk.Button(frame, text="Baixar CSV de Exemplo", command=baixar_csv_exemplo, bg="#28a745", fg="white", borderwidth=0, padx=10, pady=5)
+baixar_btn.pack(pady=10)
+
 # Label para exibir resultados
 resultado_label = tk.Label(frame, text="Nenhum dado carregado. Insira uma planilha CSV (UTF-8 delimitado por vírgulas.)", justify="center", bg="#f0f0f0")
 resultado_label.pack(pady=10)
@@ -110,6 +106,13 @@ resultado_label.pack(pady=10)
 # Botão para gerar gráfico (inicialmente desativado)
 gerar_grafico_btn = tk.Button(frame, text="Gerar Gráfico", command=gerar_grafico, state=tk.DISABLED, bg="white", fg="gray", borderwidth=0, padx=10, pady=5)
 gerar_grafico_btn.pack(pady=10)
+
+# Estilo dos botões
+def update_button_style():
+    if gerar_grafico_btn['state'] == tk.NORMAL:
+        gerar_grafico_btn.config(bg="#008CBA", fg="white")
+    else:
+        gerar_grafico_btn.config(bg="white", fg="gray")
 
 # Executar a interface
 root.mainloop()
