@@ -31,11 +31,11 @@ def processar_dados(df):
     try:
         total_visitas = df['Visitantes'].sum() if 'Visitantes' in df.columns else "N/A"
         faturamento_medio = df['Faturamento'].mean() if 'Faturamento' in df.columns else "N/A"
-        total_vendas = df['Vendas'].sum() if 'Vendas' in df.columns else "N/A"
+        total_servicos = df['Serviços'].sum() if 'Serviços' in df.columns else "N/A"
 
         resultado_label.config(text=f"Total de Visitantes: {total_visitas}\n"
                                     f"Faturamento Médio: {faturamento_medio}\n"
-                                    f"Total de Vendas: {total_vendas}")
+                                    f"Total de Serviços: {total_servicos}")
 
         gerar_grafico_btn.config(state=tk.NORMAL)
         update_button_style()  # Atualizar estilo do botão ao habilitar
@@ -50,7 +50,7 @@ def gerar_grafico():
     plt.figure(figsize=(10, 6))
 
     # Gráfico de barras agrupadas
-    if 'Vendas' in df.columns or 'Visitantes' in df.columns or 'Faturamento' in df.columns:
+    if 'Serviços' in df.columns or 'Visitantes' in df.columns or 'Faturamento' in df.columns:
         df['Data'] = pd.to_datetime(df['Data'], format='%d/%m/%Y')  # Assegura que a data esteja no formato correto
         df['Data'] = df['Data'].dt.strftime('%d/%m/%Y')  # Formatar data no formato DD/MM/YYYY
 
@@ -63,10 +63,10 @@ def gerar_grafico():
         index = np.arange(n_groups)
 
         # Verificar se as colunas existem e criar barras somente se os dados forem consistentes
-        if 'Vendas' in grouped.columns:
-            vendas_data = grouped['Vendas']
+        if 'Serviços' in grouped.columns:
+            servicos_data = grouped['Serviços']
         else:
-            vendas_data = [0] * n_groups  # Dados vazios se a coluna não existir
+            servicos_data = [0] * n_groups  # Dados vazios se a coluna não existir
 
         if 'Visitantes' in grouped.columns:
             visitantes_data = grouped['Visitantes']
@@ -79,9 +79,9 @@ def gerar_grafico():
             faturamento_data = [0] * n_groups
 
         # Garantir que todas as colunas têm o mesmo tamanho
-        if len(vendas_data) == len(visitantes_data) == len(faturamento_data):
+        if len(servicos_data) == len(visitantes_data) == len(faturamento_data):
             # Criar barras para cada métrica
-            plt.bar(index, vendas_data, bar_width, label='Total de Vendas', color='blue')
+            plt.bar(index, servicos_data, bar_width, label='Total de Serviços', color='blue')
             plt.bar(index + bar_width, visitantes_data, bar_width, label='Total de Visitantes', color='orange')
             plt.bar(index + 2 * bar_width, faturamento_data, bar_width, label='Faturamento Médio', color='green')
 
@@ -95,7 +95,7 @@ def gerar_grafico():
         else:
             messagebox.showerror("Erro", "Os dados têm tamanhos inconsistentes e não podem ser plotados.")
     else:
-        messagebox.showerror("Erro", "Não foi possível gerar o gráfico. Colunas 'Vendas', 'Visitantes' ou 'Faturamento' não encontradas.")
+        messagebox.showerror("Erro", "Não foi possível gerar o gráfico. Colunas 'Serviços', 'Visitantes' ou 'Faturamento' não encontradas.")
 
 # Função para baixar o CSV de exemplo
 def baixar_csv_exemplo():
