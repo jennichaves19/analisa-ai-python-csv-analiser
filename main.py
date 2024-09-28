@@ -1,9 +1,10 @@
+import shutil
 import tkinter as tk
 from tkinter import filedialog, messagebox
-import pandas as pd
+
 import matplotlib.pyplot as plt
-import shutil
-import os
+import pandas as pd
+import numpy as np
 
 # Função para abrir o arquivo
 def abrir_arquivo():
@@ -20,6 +21,7 @@ def abrir_arquivo():
             if 'Data' in df.columns:
                 df['Data'] = pd.to_datetime(df['Data'], format='%d/%m/%Y')
 
+            gerar_grafico_btn.df = df  # Armazenar o DataFrame no botão para uso posterior
             processar_dados(df)
         except Exception as e:
             messagebox.showerror("Erro", f"Erro ao processar o arquivo: {e}")
@@ -47,23 +49,51 @@ def gerar_grafico():
 
     plt.figure(figsize=(10, 6))
 
-    # Gráfico de barras
+    # Gráfico de barras agrupadas
     if 'Vendas' in df.columns or 'Visitantes' in df.columns or 'Faturamento' in df.columns:
-        if 'Vendas' in df.columns:
-            df.groupby('Data')['Vendas'].sum().plot(kind='bar', alpha=0.7, label='Total de Vendas', color='blue', width=0.3)
+        df['Data'] = pd.to_datetime(df['Data'], format='%d/%m/%Y')  # Assegura que a data esteja no formato correto
+        df['Data'] = df['Data'].dt.strftime('%d/%m/%Y')  # Formatar data no formato DD/MM/YYYY
 
-        if 'Visitantes' in df.columns:
-            df.groupby('Data')['Visitantes'].sum().plot(kind='bar', alpha=0.7, label='Total de Visitantes', color='orange', width=0.3)
+        # Agrupar por data e somar/média as colunas
+        grouped = df.groupby('Data').sum()
 
-        if 'Faturamento' in df.columns:
-            df.groupby('Data')['Faturamento'].mean().plot(kind='bar', alpha=0.7, label='Faturamento Médio', color='green', width=0.3)
+        # Certifique-se de que todos os dados têm o mesmo número de linhas
+        n_groups = len(grouped.index)
+        bar_width = 0.25
+        index = np.arange(n_groups)
 
-        plt.title("Métricas por Dia")
-        plt.xlabel("Data")
-        plt.ylabel("Valores")
-        plt.legend()
-        plt.tight_layout()
-        plt.show()
+        # Verificar se as colunas existem e criar barras somente se os dados forem consistentes
+        if 'Vendas' in grouped.columns:
+            vendas_data = grouped['Vendas']
+        else:
+            vendas_data = [0] * n_groups  # Dados vazios se a coluna não existir
+
+        if 'Visitantes' in grouped.columns:
+            visitantes_data = grouped['Visitantes']
+        else:
+            visitantes_data = [0] * n_groups
+
+        if 'Faturamento' in grouped.columns:
+            faturamento_data = grouped['Faturamento']
+        else:
+            faturamento_data = [0] * n_groups
+
+        # Garantir que todas as colunas têm o mesmo tamanho
+        if len(vendas_data) == len(visitantes_data) == len(faturamento_data):
+            # Criar barras para cada métrica
+            plt.bar(index, vendas_data, bar_width, label='Total de Vendas', color='blue')
+            plt.bar(index + bar_width, visitantes_data, bar_width, label='Total de Visitantes', color='orange')
+            plt.bar(index + 2 * bar_width, faturamento_data, bar_width, label='Faturamento Médio', color='green')
+
+            plt.title("Métricas por Dia")
+            plt.xlabel("Data")
+            plt.ylabel("Valores")
+            plt.xticks(index + bar_width, grouped.index, rotation=45)  # Rotaciona as datas no eixo x para melhor visualização
+            plt.legend()
+            plt.tight_layout()
+            plt.show()
+        else:
+            messagebox.showerror("Erro", "Os dados têm tamanhos inconsistentes e não podem ser plotados.")
     else:
         messagebox.showerror("Erro", "Não foi possível gerar o gráfico. Colunas 'Vendas', 'Visitantes' ou 'Faturamento' não encontradas.")
 
@@ -79,7 +109,6 @@ def baixar_csv_exemplo():
             messagebox.showinfo("Sucesso", "CSV de exemplo baixado com sucesso!")
     except Exception as e:
         messagebox.showerror("Erro", f"Erro ao baixar o arquivo: {e}")
-
 
 # Interface gráfica
 root = tk.Tk()
